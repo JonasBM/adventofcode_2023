@@ -78,5 +78,5 @@ def run():
     print('part 2:', schematic.count2) # 78669 # 467835
 
 if __name__ == '__main__':
-    print('starting Day 01')
+    print('starting Day 03')
     run()

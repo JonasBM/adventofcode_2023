@@ -77,5 +77,5 @@ def run():
     print('part 2:', result_part2) # 78669
 
 if __name__ == '__main__':
-    print('starting Day 01')
+    print('starting Day 02')
     run()
