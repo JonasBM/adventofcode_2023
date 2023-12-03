@@ -1,6 +1,5 @@
 import os
-import re
-from typing import List, Tuple
+from typing import List
 
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
@@ -9,12 +8,17 @@ class Schematic:
     filepath:str = None
     matrix:List[str] = []
     count1:int = 0
+    count2:int = 0
     rows:int = 0
     columns:int = 0
 
     def __init__(self, filepath:str) -> None:
         self.filepath = filepath
+        self.matrix = []
         self.count1 = 0
+        self.count2 = 0
+        self.rows = 0
+        self.columns = 0
         self._read()
 
     def _read(self):
@@ -25,58 +29,42 @@ class Schematic:
         self.columns = len(self.matrix[0])
 
     def count_part_numbers(self):
-        i = 0
-        while i < self.rows:
-            j = 0
-            while j < self.columns:
-                char = self.matrix[i][j]
-                if char.isdigit():
-                    j, part_number = self._get_part_number(i, j)
-                    self.count1 += part_number
-                else:
-                    j += 1
-            i += 1
+        for i in range(self.rows):
+            for j in range(self.columns):
+                if self._is_simbol(self.matrix[i][j]):
+                    self._find_parts_coords(i, j)
 
-    def _get_part_number(self, i:int, start_j:int) -> int:
-        if not self.matrix[i][start_j].isdigit() or start_j == self.columns - 1:
-            return start_j + 1, 0
-        j = start_j + 1
-        for char in self.matrix[i][j:]:
-            if not char.isdigit():
-                break
-            j += 1
-        if not self._validate_part_number(i, start_j, j - 1):
-            return j, 0
-        return j, int(self.matrix[i][start_j:j])
+    def _find_parts_coords(self, i:int, j:int):
+        i_list = [i-1, i, i+1]
+        j_list = [j-1, j, j+1]
+        _parts = []
+        for aux_i in i_list:
+            for aux_j in j_list:
+                if self.matrix[aux_i][aux_j].isdigit():
+                    part_number, start_j, end_j = self._get_adjacent_part(aux_i, aux_j)
+                    if (part_number, aux_i, start_j, end_j) not in _parts:
+                        _parts.append((part_number, aux_i, start_j, end_j))
+        is_engine = self.matrix[i][j] == '*' and len(_parts) > 1
+        gear_ratio = 1
+        for part_number, _, _, _ in _parts:
+            self.count1 += part_number
+            if is_engine:
+                gear_ratio *= part_number
+        if is_engine:
+            self.count2 += gear_ratio
 
-    def _validate_part_number(self, i:int, start_j:int, end_j:int) -> bool:
-        if start_j > 0:
+    def _get_adjacent_part(self, i:int, j:int) -> (int, int):
+        part_number = self.matrix[i][j]
+        start_j = j - 1
+        while self.matrix[i][start_j].isdigit():
+            part_number = self.matrix[i][start_j] + part_number
             start_j -= 1
-        if end_j < self.columns - 1:
+        end_j = j + 1
+        while end_j < self.columns and self.matrix[i][end_j].isdigit():
+            part_number += self.matrix[i][end_j]
             end_j += 1
-
-        # same line
-        if self._is_simbol(self.matrix[i][start_j]):
-            return True
-        if end_j >= self.columns:
-            if self._is_simbol(self.matrix[i][self.columns-1]):
-                return True
-        else:
-            if self._is_simbol(self.matrix[i][end_j]):
-                return True
-
-        # one line above
-        if i > 0:
-            for j in range(start_j, end_j + 1):
-                if self._is_simbol(self.matrix[i-1][j]):
-                    return True
-
-        # one line below
-        if i < self.rows - 1:
-            for j in range(start_j, end_j + 1):
-                if self._is_simbol(self.matrix[i+1][j]):
-                    return True
-        return False
+        start_j, end_j = start_j + 1, end_j - 1
+        return int(self.matrix[i][start_j:end_j+1]), start_j, end_j
 
     def _is_simbol(self, char:str) -> bool:
         return not char.isdigit() and char != '.'
@@ -84,11 +72,10 @@ class Schematic:
 def run():
     print('run')
     input_path = os.path.join(script_directory, 'input.txt')
-    result_part2 = 0
     schematic = Schematic(input_path)
     schematic.count_part_numbers()
-    print('part 1:', schematic.count1) # 3744
-    print('part 2:', result_part2) # 78669
+    print('part 1:', schematic.count1) # 517021 # 4361
+    print('part 2:', schematic.count2) # 78669 # 467835
 
 if __name__ == '__main__':
     print('starting Day 01')
