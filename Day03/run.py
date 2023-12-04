@@ -11,6 +11,7 @@ class Schematic:
     count2:int = 0
     rows:int = 0
     columns:int = 0
+    part_numbers_map:List[str] = []
 
     def __init__(self, filepath:str) -> None:
         self.filepath = filepath
@@ -42,9 +43,11 @@ class Schematic:
             for aux_j in j_list:
                 if self.matrix[aux_i][aux_j].isdigit():
                     part_number, start_j, end_j = self._get_adjacent_part(aux_i, aux_j)
-                    if (part_number, aux_i, start_j, end_j) not in _parts:
+                    key = f'{part_number}_{aux_i}_{start_j}_{end_j}'
+                    if key not in self.part_numbers_map:
+                        self.part_numbers_map.append(key)
                         _parts.append((part_number, aux_i, start_j, end_j))
-        is_engine = self.matrix[i][j] == '*' and len(_parts) > 1
+        is_engine = self.matrix[i][j] == '*' and len(_parts) == 2
         gear_ratio = 1
         for part_number, _, _, _ in _parts:
             self.count1 += part_number
@@ -74,8 +77,8 @@ def run():
     input_path = os.path.join(script_directory, 'input.txt')
     schematic = Schematic(input_path)
     schematic.count_part_numbers()
-    print('part 1:', schematic.count1) # 517021 # 4361
-    print('part 2:', schematic.count2) # 78669 # 467835
+    print('part 1:', schematic.count1) # 517021
+    print('part 2:', schematic.count2) # 81296995
 
 if __name__ == '__main__':
     print('starting Day 03')
