@@ -1,16 +1,19 @@
 import os
 import time
 from typing import List
+from functools import cmp_to_key
 
 
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
-CARD_SEQUENCE = '23456789TJQKA'
+CARD_SEQUENCE_PART1 = '23456789TJQKA'
+CARD_SEQUENCE_PART2 = 'J23456789TQKA'
 
 class Hand:
 
     cards:str = []
-    hank = []
+    hank_part1 = []
+    hank_part2 = []
     bid:int = 0
 
     def __init__(self, line:str):
@@ -19,17 +22,32 @@ class Hand:
         self.cards = line[0]
         self.bid = int(line[1])
         temp_hank = {}
-        self.hank = []
+        self.hank_part1 = []
+        self.hank_part2 = []
         for c in self.cards:
-            self.hank.append(CARD_SEQUENCE.index(c))
+            self.hank_part1.append(CARD_SEQUENCE_PART1.index(c))
+            self.hank_part2.append(CARD_SEQUENCE_PART2.index(c))
             if c not in temp_hank:
                 temp_hank[c] = 0
             temp_hank[c] += 1
-        self.hank = sorted(temp_hank.values(), reverse=True) + self.hank
+        self.hank_part1 = sorted(temp_hank.values(), reverse=True) + self.hank_part1
+        wildcard = temp_hank.pop('J', 0)
+        self.hank_part2 = sorted(temp_hank.values(), reverse=True) + self.hank_part2
+        self.hank_part2[0] += wildcard
 
-    def __lt__(self, other:'Hand'):
-        return self.hank > other.hank
+def compare_part1(a:Hand, b:Hand):
+    if a.hank_part1 == b.hank_part1:
+        return 0
+    if a.hank_part1 > b.hank_part1:
+        return 1
+    return -1
 
+def compare_part2(a:Hand, b:Hand):
+    if a.hank_part2 == b.hank_part2:
+        return 0
+    if a.hank_part2 > b.hank_part2:
+        return 1
+    return -1
 
 class Game:
     filepath:str = None
@@ -57,9 +75,14 @@ class Game:
 
     def calculate(self):
         self.count1 = 0
-        sorted_hands = sorted(self.hands, reverse=True)
+        sorted_hands = sorted(self.hands, key=cmp_to_key(compare_part1))
         for index, hand in enumerate(sorted_hands):
             self.count1 += (index + 1) * hand.bid
+
+        self.count2 = 0
+        sorted_hands = sorted(self.hands, key=cmp_to_key(compare_part2))
+        for index, hand in enumerate(sorted_hands):
+            self.count2 += (index + 1) * hand.bid
 
 def run():
     start_time = time.time()
@@ -68,7 +91,7 @@ def run():
     game = Game(input_path)
     game.calculate()
     print('part 1:', game.count1) # 248217452
-    print('part 2:', game.count2) # 
+    print('part 2:', game.count2) # 245576185
     print(f'Completed in: {round(time.time() - start_time, 6)} seconds')
 
 if __name__ == '__main__':
