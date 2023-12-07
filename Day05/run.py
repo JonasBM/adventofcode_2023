@@ -154,5 +154,5 @@ def run():
 
 
 if __name__ == '__main__':
-    print('starting Day 04')
+    print(f'starting {os.path.basename(script_directory)}')
     run()
