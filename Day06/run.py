@@ -41,12 +41,14 @@ class Race:
 class Races:
     filepath:str = None
     races:List[Race] = []
+    part2_race:Race = None
     count1:int = 0
     count2:int = 0
 
     def __init__(self, filepath:str):
         self.filepath = filepath
         self.races = []
+        self.part2_race = None
         self.count1 = 0
         self.count2 = 0
         self._read()
@@ -55,12 +57,16 @@ class Races:
         with open(self.filepath, 'r', encoding='utf-8') as f:
             times = []
             distances = []
+            race = [0, 0]
             for line in f:
                 line = line.strip().lower()
                 if line.startswith('time'):
                     times = [int(n) for n in line.split(':')[1].strip().split(' ') if n]
+                    race[0] = int(line.replace(' ', '').split(':')[1])
                 elif line.startswith('distance'):
                     distances = [int(n) for n in line.split(':')[1].strip().split(' ') if n]
+                    race[1] = int(line.replace(' ', '').split(':')[1])
+            self.part2_race = Race(*race)
             if len(times) != len(distances):
                 raise ValueError('Invalid input')
             for race_time, distance in zip(times, distances):
@@ -72,6 +78,10 @@ class Races:
             x1, x2 = race.get_button_time()
             self.count1 *= x2 - x1 + 1
 
+        # part 2
+        x1, x2 = self.part2_race.get_button_time()
+        self.count2 = x2 - x1 + 1
+
 def run():
     start_time = time.time()
     print('run')
@@ -79,7 +89,7 @@ def run():
     races = Races(input_path)
     races.calculate()
     print('part 1:', races.count1) # 2344708
-    print('part 2:', races.count2) # 0
+    print('part 2:', races.count2) # 30125202
     print(f'Completed in: {round(time.time() - start_time, 6)} seconds')
 
 if __name__ == '__main__':
